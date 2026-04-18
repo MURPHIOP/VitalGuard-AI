@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "VITALGUARD AI",
+    "slug": "vitalguard-ai",
+    "scheme": "vitalguard",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "appMode": "LIVE",
+      "apiBaseUrl": "http://192.168.29.225:8000",
+      "socketUrl": "ws://192.168.29.225:8000/ws/clients",
+      "mockMode": false,
+      "allowLocalhost": false
+    }
+  }
+}
