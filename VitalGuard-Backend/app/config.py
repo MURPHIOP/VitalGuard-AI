@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     storage_mode: str = Field(default="memory", alias="STORAGE_MODE")
 
     model_path: str = Field(default="classifier/fall_model.pkl", alias="MODEL_PATH")
-    use_mock_inference: bool = Field(default=False, alias="USE_MOCK_INFERENCE")
+    use_mock_inference: bool = Field(default=True, alias="USE_MOCK_INFERENCE")
     use_mock_stream: bool = Field(default=True, alias="USE_MOCK_STREAM")
     mock_room_ids: str = Field(default="401,402,403", alias="MOCK_ROOM_IDS")
 

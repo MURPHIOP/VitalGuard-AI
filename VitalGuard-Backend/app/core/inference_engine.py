@@ -1,10 +1,27 @@
 from dataclasses import dataclass
 from pathlib import Path
+import logging
 from typing import Protocol
 
 import joblib
 import numpy as np
-from loguru import logger
+try:
+    from loguru import logger
+except Exception:
+    class _LoggerFallback:
+        def __init__(self) -> None:
+            self._logger = logging.getLogger("vitalguard.inference")
+
+        def info(self, message: str, *args) -> None:
+            self._logger.info(message.format(*args) if args else message)
+
+        def warning(self, message: str, *args) -> None:
+            self._logger.warning(message.format(*args) if args else message)
+
+        def exception(self, message: str, *args) -> None:
+            self._logger.exception(message.format(*args) if args else message)
+
+    logger = _LoggerFallback()
 
 from app.core.feature_extractor import FeatureVector
 

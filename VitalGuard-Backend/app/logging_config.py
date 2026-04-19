@@ -1,10 +1,22 @@
 import logging
 import sys
 
-from loguru import logger
+try:
+    from loguru import logger
+except Exception:
+    logger = None
 
 
 def configure_logging(level: str = "INFO") -> None:
+    if logger is None:
+        logging.basicConfig(
+            level=getattr(logging, level.upper(), logging.INFO),
+            format="%(asctime)s | %(levelname)s | %(name)s:%(funcName)s:%(lineno)d - %(message)s",
+            stream=sys.stdout,
+            force=True,
+        )
+        return
+
     logger.remove()
     logger.add(
         sys.stdout,
