@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from time import time
 
-from loguru import logger
+from app.utils.logger import logger
 
 from app.core.buffers import SlidingWindowBuffer
 from app.core.feature_extractor import extract_feature_vector

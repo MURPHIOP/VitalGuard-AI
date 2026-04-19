@@ -3,7 +3,7 @@ import random
 import time
 from dataclasses import dataclass
 
-from loguru import logger
+from app.utils.logger import logger
 
 from app.models.telemetry import TelemetryIn
 
