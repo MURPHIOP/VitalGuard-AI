@@ -26,7 +26,10 @@ type AppState = {
   selectedRoomId?: string;
   feedbackStateByRoom: Record<string, FeedbackSubmissionState>;
   bootstrapped: boolean;
+  demoOverrideUntil: number;
   setBootstrapped: (ready: boolean) => void;
+  activateDemoOverride: (durationMs?: number) => void;
+  isDemoOverrideActive: () => boolean;
   setConnectionState: (state: ConnectionState) => void;
   upsertTelemetry: (payload: TelemetryPayload) => void;
   addHistoryItems: (items: AnomalyHistoryItem[]) => void;
@@ -97,7 +100,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedRoomId: undefined,
   feedbackStateByRoom: {},
   bootstrapped: false,
+  demoOverrideUntil: 0,
   setBootstrapped: (ready) => set({ bootstrapped: ready }),
+  activateDemoOverride: (durationMs = 90000) =>
+    set({
+      demoOverrideUntil: Date.now() + durationMs,
+      connectionState: "MOCK"
+    }),
+  isDemoOverrideActive: () => Date.now() < get().demoOverrideUntil,
   setConnectionState: (state) => set({ connectionState: state }),
   setSelectedRoom: (id) => set({ selectedRoomId: id }),
   setFeedbackState: (roomId, status) =>
@@ -203,6 +213,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       return;
     }
 
+    get().activateDemoOverride(90000);
     const payload = makeDemoPayload(roomId, status);
     get().upsertTelemetry(payload);
 
@@ -223,6 +234,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   forceAllRoomStatuses: (status) => {
     get().ensureDemoRooms();
+    get().activateDemoOverride(90000);
     setAllMockManualStatus(status, 60000);
     const roomIds = get().roomOrder.length > 0 ? get().roomOrder : getMockRoomIds();
     roomIds.forEach((roomId) => {
@@ -231,6 +243,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   injectDemoHistoryFall: (roomId) => {
     get().ensureDemoRooms();
+    get().activateDemoOverride(90000);
     const targetRoomId = roomId ?? get().roomOrder[0] ?? getMockRoomIds()[0];
     const payload = makeDemoPayload(targetRoomId, ROOM_STATUS.FALL);
     get().upsertTelemetry(payload);
@@ -245,6 +258,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   simulateFeedbackSuccess: (roomId) => {
     get().ensureDemoRooms();
+    get().activateDemoOverride(90000);
     const targetRoomId = roomId ?? get().roomOrder[0] ?? getMockRoomIds()[0];
     const pending = get()
       .history.find((item) => item.roomId === targetRoomId && item.feedback === "PENDING" && item.type === ROOM_STATUS.FALL);
@@ -263,6 +277,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     get().setFeedbackState(targetRoomId, "success");
   },
   simulateReconnect: () => {
+    get().activateDemoOverride(45000);
     get().setConnectionState("RECONNECTING");
     setTimeout(() => {
       const current = get().connectionState;

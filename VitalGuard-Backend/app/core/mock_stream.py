@@ -52,14 +52,14 @@ class MockTelemetryStream:
 
     def _make_payload(self, room: RoomMockState, ts: int) -> TelemetryIn:
         roll = random.random()
-        if roll > 0.992:
+        if roll > 0.9998:
             label = "FALL"
         elif roll < 0.15:
             label = "EMPTY"
         else:
             label = "NORMAL"
 
-        if room.previous_label == "FALL" and random.random() < 0.4:
+        if room.previous_label == "FALL" and random.random() < 0.1:
             label = "FALL"
 
         room.previous_label = label

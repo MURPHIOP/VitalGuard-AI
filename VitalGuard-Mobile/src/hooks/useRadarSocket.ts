@@ -16,6 +16,7 @@ export const useRadarSocket = () => {
   const prependHistoryItem = useAppStore((state) => state.prependHistoryItem);
   const setBootstrapped = useAppStore((state) => state.setBootstrapped);
   const markRoomsOffline = useAppStore((state) => state.markRoomsOffline);
+  const isDemoOverrideActive = useAppStore((state) => state.isDemoOverrideActive);
   const { triggerFall, triggerReconnect } = useHaptics();
   const previousConnection = useRef<string>("DISCONNECTED");
   const previousLabels = useRef<Record<string, string>>({});
@@ -101,6 +102,10 @@ export const useRadarSocket = () => {
     }
 
     const offTelemetry = radarSocket.on("telemetry", (payload) => {
+      if (useAppStore.getState().isDemoOverrideActive()) {
+        return;
+      }
+
       upsertTelemetry(payload);
       const previous = previousLabels.current[payload.roomId];
       previousLabels.current[payload.roomId] = payload.label;
@@ -111,6 +116,10 @@ export const useRadarSocket = () => {
     });
 
     const offAlert = radarSocket.on("alert", (alert) => {
+      if (useAppStore.getState().isDemoOverrideActive()) {
+        return;
+      }
+
       const existing = useAppStore.getState().history.some((item) => item.id === alert.anomalyId);
       if (!existing) {
         prependHistoryItem({
@@ -126,6 +135,11 @@ export const useRadarSocket = () => {
     });
 
     const offConnection = radarSocket.on("connection", (state) => {
+      if (useAppStore.getState().isDemoOverrideActive()) {
+        setConnectionState("MOCK");
+        return;
+      }
+
       if (previousConnection.current === "RECONNECTING" && state === "CONNECTED") {
         void triggerReconnect();
       }
@@ -139,6 +153,11 @@ export const useRadarSocket = () => {
     });
 
     const offError = radarSocket.on("error", () => {
+      if (useAppStore.getState().isDemoOverrideActive()) {
+        setConnectionState("MOCK");
+        return;
+      }
+
       markRoomsOffline();
       setConnectionState("RECONNECTING");
     });
@@ -153,5 +172,5 @@ export const useRadarSocket = () => {
       offError();
       radarSocket.disconnect();
     };
-  }, [addHistoryItems, markRoomsOffline, prependHistoryItem, setBootstrapped, setConnectionState, shouldUseMock, triggerFallOnce, triggerReconnect, upsertTelemetry]);
+  }, [addHistoryItems, isDemoOverrideActive, markRoomsOffline, prependHistoryItem, setBootstrapped, setConnectionState, shouldUseMock, triggerFallOnce, triggerReconnect, upsertTelemetry]);
 };
