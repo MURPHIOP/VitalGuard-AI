@@ -73,7 +73,7 @@ const scheduleNextPhase = (runtime: RoomRuntime) => {
     return;
   }
 
-  if (roll < 0.05) {
+  if (roll < 0.008) {
     runtime.status = ROOM_STATUS.FALL;
     runtime.phaseTicksRemaining = randomInt(4, 7);
     runtime.fallStage = 0;
@@ -211,10 +211,25 @@ export const setAllMockManualStatus = (status: RoomStatus, durationMs: number = 
 export const clearMockManualStatus = (roomId?: string) => {
   if (roomId) {
     delete manualOverrideByRoom[roomId];
+    const runtime = runtimeByRoom[roomId];
+    if (runtime) {
+      runtime.fallStage = 0;
+    }
     return;
   }
   roomIds.forEach((id) => {
     delete manualOverrideByRoom[id];
+  });
+};
+
+export const resetMockSimulation = () => {
+  roomIds.forEach((roomId) => {
+    delete manualOverrideByRoom[roomId];
+    const runtime = ensureRuntime(roomId);
+    runtime.status = ROOM_STATUS.NORMAL;
+    runtime.phaseTicksRemaining = randomInt(10, 18);
+    runtime.fallStage = 0;
+    runtime.tick = randomInt(0, 30);
   });
 };
 
@@ -229,7 +244,7 @@ export const createInitialMockHistory = (): AnomalyHistoryItem[] => {
       type: ROOM_STATUS.FALL,
       timestamp: new Date(now - 4 * 60 * 1000).toISOString(),
       confidence: 0.93,
-      feedback: "PENDING"
+      feedback: "FALSE_ALARM"
     },
     {
       id: "evt_mock_002",

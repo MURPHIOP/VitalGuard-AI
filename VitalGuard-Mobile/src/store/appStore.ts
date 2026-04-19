@@ -4,8 +4,10 @@ import { useShallow } from "zustand/react/shallow";
 import { config } from "@/constants/config";
 import { ROOM_STATUS, RoomStatus } from "@/constants/roomStatus";
 import {
+  clearMockManualStatus,
   createMockTelemetry,
   getMockRoomIds,
+  resetMockSimulation,
   setAllMockManualStatus,
   setMockManualStatus
 } from "@/services/mockData";
@@ -115,13 +117,22 @@ export const useAppStore = create<AppState>((set, get) => ({
       connectionState: "MOCK"
     }),
   isDemoOverrideActive: () => Date.now() < get().demoOverrideUntil,
-  setDemoDataMode: (mode) =>
+  setDemoDataMode: (mode) => {
+    resetMockSimulation();
+    clearMockManualStatus();
     set({
       demoDataMode: mode,
+      rooms: {},
+      roomOrder: [],
+      history: [],
+      feedbackStateByRoom: {},
+      selectedRoomId: undefined,
       demoOverrideUntil: 0,
+      fallHoldUntilByRoom: {},
       bootstrapped: false,
       connectionState: mode === "MOCK" ? "MOCK" : "CONNECTING"
-    }),
+    });
+  },
   setConnectionState: (state) => set({ connectionState: state }),
   setSelectedRoom: (id) => set({ selectedRoomId: id }),
   setFeedbackState: (roomId, status) =>
