@@ -2,7 +2,7 @@
 
 VITALGUARD AI BACKEND is a production-style FastAPI service for privacy-preserving, real-time mmWave radar fall detection.
 
-It ingests telemetry from edge nodes, runs sliding-window feature extraction and ML inference, stores data in MongoDB, pushes live state updates to mobile clients over WebSockets, and captures caregiver feedback for model quality loops.
+It ingests telemetry from edge nodes, runs sliding-window feature extraction and ML inference, stores data in memory, pushes live state updates to mobile clients over WebSockets, and captures caregiver feedback for model quality loops.
 
 ## Architecture
 
@@ -11,7 +11,7 @@ It ingests telemetry from edge nodes, runs sliding-window feature extraction and
 - Real-time room cache with stale/offline tracking
 - Sliding window feature extraction (window + step)
 - Inference engine with model loading and deterministic fallback
-- MongoDB repositories for telemetry, anomalies, feedback, room snapshots
+- In-memory repositories for telemetry, anomalies, feedback, room snapshots
 - REST APIs for rooms, system status, history, and feedback submission
 - Optional mock telemetry stream for hardware-free demo mode
 
@@ -20,13 +20,12 @@ It ingests telemetry from edge nodes, runs sliding-window feature extraction and
 - app/config.py: environment-based settings
 - app/logging_config.py: Loguru + stdlib logging interception
 - app/models: pydantic request/response contracts
-- app/db: Mongo manager, indexes, repository layer
+- app/db: in-memory repository layer
 - app/core: buffers, feature extraction, inference, websocket manager, mock stream
 - app/services: orchestration layer for telemetry, anomalies, feedback, broadcast
 - app/api: REST route modules
 - app/main.py: app startup, dependency wiring, websocket routes, lifecycle
 - scripts/generate_mock_model.py: build classifier artifact
-- scripts/seed_mock_data.py: seed sample anomaly history
 - tests: feature extraction, inference, feedback API tests
 
 ## Environment Setup
@@ -37,8 +36,8 @@ cp .env.example .env
 
 2. Update:
 
-- MONGODB_URI
-- MONGODB_DB
+- APP_ENV
+- STORAGE_MODE
 - MODEL_PATH
 - USE_MOCK_STREAM
 - CORS_ORIGINS

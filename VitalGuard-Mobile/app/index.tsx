@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { EmptyState } from "@/components/EmptyState";
 import { FleetHeader } from "@/components/FleetHeader";
+import { DemoControlPanel } from "@/components/DemoControlPanel";
 import { ParallaxContainer } from "@/components/ParallaxContainer";
 import { RoomCard } from "@/components/RoomCard";
 import { ScreenBackground } from "@/components/ScreenBackground";
@@ -40,6 +41,8 @@ export default function FleetScreen() {
           <ParallaxContainer scrollY={scrollY} depth={0.07}>
             <FleetHeader />
           </ParallaxContainer>
+
+          <DemoControlPanel />
 
           <View style={styles.sectionRow}>
             <SectionHeader title="Live Room Fleet" subtitle="Tap a room for deep telemetry" />

@@ -20,6 +20,8 @@ async def status(request: Request) -> dict:
 
     return {
         "app": request.app.state.settings.app_name,
+        "appEnv": request.app.state.settings.app_env,
+        "storageMode": request.app.state.settings.storage_mode,
         "rooms": len(rooms),
         "activeAlerts": active_alerts,
         "connectedClients": connected_clients,

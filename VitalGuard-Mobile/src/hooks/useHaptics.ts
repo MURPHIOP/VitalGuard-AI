@@ -3,15 +3,27 @@ import { useCallback } from "react";
 
 export const useHaptics = () => {
   const triggerFall = useCallback(async () => {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    try {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } catch {
+      // Haptics support may be unavailable on some simulators/devices.
+    }
   }, []);
 
   const triggerReconnect = useCallback(async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      // Ignore haptics failures to keep interaction flow stable.
+    }
   }, []);
 
   const triggerSuccess = useCallback(async () => {
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    try {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      // Ignore haptics failures to keep interaction flow stable.
+    }
   }, []);
 
   return {

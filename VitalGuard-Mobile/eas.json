@@ -1,0 +1,43 @@
+{
+  "cli": {
+    "version": ">= 13.0.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+        "EXPO_PUBLIC_APP_MODE": "LIVE",
+        "EXPO_PUBLIC_MOCK_MODE": "false",
+        "EXPO_PUBLIC_DEMO_CONTROLS": "true",
+        "EXPO_PUBLIC_ALLOW_LOCALHOST": "false",
+        "EXPO_PUBLIC_API_BASE_URL": "https://YOUR-RENDER-SERVICE.onrender.com",
+        "EXPO_PUBLIC_SOCKET_URL": "wss://YOUR-RENDER-SERVICE.onrender.com/ws/clients"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
+        "EXPO_PUBLIC_APP_MODE": "LIVE",
+        "EXPO_PUBLIC_MOCK_MODE": "false",
+        "EXPO_PUBLIC_DEMO_CONTROLS": "true",
+        "EXPO_PUBLIC_ALLOW_LOCALHOST": "false",
+        "EXPO_PUBLIC_API_BASE_URL": "https://YOUR-RENDER-SERVICE.onrender.com",
+        "EXPO_PUBLIC_SOCKET_URL": "wss://YOUR-RENDER-SERVICE.onrender.com/ws/clients"
+      }
+    }
+  }
+}

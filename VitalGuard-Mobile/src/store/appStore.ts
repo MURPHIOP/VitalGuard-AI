@@ -1,7 +1,13 @@
 import { create } from "zustand";
 
 import { config } from "@/constants/config";
-import { ROOM_STATUS } from "@/constants/roomStatus";
+import { ROOM_STATUS, RoomStatus } from "@/constants/roomStatus";
+import {
+  createMockTelemetry,
+  getMockRoomIds,
+  setAllMockManualStatus,
+  setMockManualStatus
+} from "@/services/mockData";
 import {
   AnomalyHistoryItem,
   ConnectionState,
@@ -33,6 +39,12 @@ type AppState = {
     feedback: "CONFIRMED_FALL" | "FALSE_ALARM",
     anomalyId?: string
   ) => void;
+  ensureDemoRooms: () => void;
+  forceRoomStatus: (roomId: string, status: RoomStatus) => void;
+  forceAllRoomStatuses: (status: RoomStatus) => void;
+  injectDemoHistoryFall: (roomId?: string) => void;
+  simulateFeedbackSuccess: (roomId?: string) => void;
+  simulateReconnect: () => void;
 };
 
 const toChartPoint = (payload: TelemetryPayload): RoomTelemetryPoint => ({
@@ -58,6 +70,23 @@ const createEmptyRoom = (payload: TelemetryPayload): RoomModel => ({
 
 const trimBuffer = (buffer: RoomTelemetryPoint[]) =>
   buffer.length > config.chartBufferSize ? buffer.slice(buffer.length - config.chartBufferSize) : buffer;
+
+const makeDemoPayload = (roomId: string, status: RoomStatus): TelemetryPayload => {
+  setMockManualStatus(roomId, status, 60000);
+  const payload = createMockTelemetry(roomId, status);
+  return {
+    ...payload,
+    label: status,
+    confidence:
+      status === ROOM_STATUS.FALL
+        ? Math.max(0.9, payload.confidence)
+        : status === ROOM_STATUS.OFFLINE
+          ? Math.min(0.55, payload.confidence)
+          : payload.confidence,
+    latency_ms: status === ROOM_STATUS.OFFLINE ? 0 : Math.max(32, payload.latency_ms),
+    server_ts: new Date().toISOString()
+  };
+};
 
 export const useAppStore = create<AppState>((set, get) => ({
   rooms: {},
@@ -153,7 +182,94 @@ export const useAppStore = create<AppState>((set, get) => ({
           ? { ...entry, feedback }
           : entry
       )
-    }))
+    })),
+  ensureDemoRooms: () => {
+    const state = get();
+    if (state.roomOrder.length > 0) {
+      return;
+    }
+
+    getMockRoomIds().forEach((roomId) => {
+      const payload = makeDemoPayload(roomId, ROOM_STATUS.NORMAL);
+      get().upsertTelemetry(payload);
+    });
+
+    get().setConnectionState("MOCK");
+    get().setBootstrapped(true);
+  },
+  forceRoomStatus: (roomId, status) => {
+    if (!roomId) {
+      return;
+    }
+
+    const payload = makeDemoPayload(roomId, status);
+    get().upsertTelemetry(payload);
+
+    if (status === ROOM_STATUS.FALL) {
+      get().prependHistoryItem({
+        id: `evt_demo_fall_${roomId}_${Date.now()}`,
+        roomId,
+        type: ROOM_STATUS.FALL,
+        timestamp: payload.server_ts,
+        confidence: payload.confidence,
+        feedback: "PENDING"
+      });
+    }
+
+    if (status === ROOM_STATUS.OFFLINE) {
+      get().setConnectionState("RECONNECTING");
+    }
+  },
+  forceAllRoomStatuses: (status) => {
+    get().ensureDemoRooms();
+    setAllMockManualStatus(status, 60000);
+    const roomIds = get().roomOrder.length > 0 ? get().roomOrder : getMockRoomIds();
+    roomIds.forEach((roomId) => {
+      get().forceRoomStatus(roomId, status);
+    });
+  },
+  injectDemoHistoryFall: (roomId) => {
+    get().ensureDemoRooms();
+    const targetRoomId = roomId ?? get().roomOrder[0] ?? getMockRoomIds()[0];
+    const payload = makeDemoPayload(targetRoomId, ROOM_STATUS.FALL);
+    get().upsertTelemetry(payload);
+    get().prependHistoryItem({
+      id: `evt_demo_injected_${targetRoomId}_${Date.now()}`,
+      roomId: targetRoomId,
+      type: ROOM_STATUS.FALL,
+      timestamp: payload.server_ts,
+      confidence: payload.confidence,
+      feedback: "PENDING"
+    });
+  },
+  simulateFeedbackSuccess: (roomId) => {
+    get().ensureDemoRooms();
+    const targetRoomId = roomId ?? get().roomOrder[0] ?? getMockRoomIds()[0];
+    const pending = get()
+      .history.find((item) => item.roomId === targetRoomId && item.feedback === "PENDING" && item.type === ROOM_STATUS.FALL);
+
+    if (!pending) {
+      get().injectDemoHistoryFall(targetRoomId);
+    }
+
+    const resolved = get()
+      .history.find((item) => item.roomId === targetRoomId && item.feedback === "PENDING" && item.type === ROOM_STATUS.FALL);
+
+    if (resolved) {
+      get().setRoomFeedbackResult(targetRoomId, "CONFIRMED_FALL", resolved.id);
+    }
+
+    get().setFeedbackState(targetRoomId, "success");
+  },
+  simulateReconnect: () => {
+    get().setConnectionState("RECONNECTING");
+    setTimeout(() => {
+      const current = get().connectionState;
+      if (current === "RECONNECTING") {
+        get().setConnectionState("CONNECTED");
+      }
+    }, 1200);
+  }
 }));
 
 export const useRooms = () =>

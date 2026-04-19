@@ -21,7 +21,13 @@ type RoomRuntime = {
   fallStage: number;
 };
 
+type ManualOverride = {
+  status: RoomStatus;
+  expiresAt: number;
+};
+
 const runtimeByRoom: Record<string, RoomRuntime> = {};
+const manualOverrideByRoom: Record<string, ManualOverride | undefined> = {};
 
 const randomBetween = (min: number, max: number) => min + Math.random() * (max - min);
 
@@ -91,6 +97,13 @@ const generateTelemetryValues = (roomId: string, runtime: RoomRuntime) => {
   const harmonic = Math.sin(runtime.tick / 3.2) * 6 + Math.cos(runtime.tick / 6.1) * 4;
   const drift = runtime.drift * runtime.tick;
 
+  if (runtime.status === ROOM_STATUS.OFFLINE) {
+    const me = clamp(base.me * 0.04 + randomBetween(-1.2, 1.2), 0, 8);
+    const se = clamp(base.se * 0.06 + randomBetween(-0.8, 0.8), 0, 6);
+    const dd = clamp(base.dd + randomBetween(-1.5, 1.5), 45, 220);
+    return { me, se, dd, confidence: randomBetween(0.3, 0.55), latency: 0 };
+  }
+
   if (runtime.status === ROOM_STATUS.EMPTY) {
     const me = clamp(base.me * 0.14 + harmonic * 0.18 + randomBetween(-1.8, 1.8), 1.8, 14);
     const se = clamp(base.se * 0.3 + Math.sin(runtime.tick / 5.5) * 1.1 + randomBetween(-1.1, 1.1), 1, 10);
@@ -124,6 +137,19 @@ const generateTelemetryValues = (roomId: string, runtime: RoomRuntime) => {
 
 export const createMockTelemetry = (roomId: string, previous: RoomStatus = ROOM_STATUS.NORMAL): TelemetryPayload => {
   const runtime = ensureRuntime(roomId);
+  const now = Date.now();
+  const override = manualOverrideByRoom[roomId];
+
+  if (override && override.expiresAt > now) {
+    runtime.status = override.status;
+    runtime.phaseTicksRemaining = Math.max(runtime.phaseTicksRemaining, 2);
+    if (override.status !== ROOM_STATUS.FALL) {
+      runtime.fallStage = 0;
+    }
+  } else if (override) {
+    delete manualOverrideByRoom[roomId];
+  }
+
   runtime.tick += 1;
 
   if (runtime.phaseTicksRemaining <= 0) {
@@ -159,6 +185,37 @@ export const createMockTelemetry = (roomId: string, previous: RoomStatus = ROOM_
     latency_ms: latency,
     nodeBattery: Math.round(runtime.battery)
   };
+};
+
+export const setMockManualStatus = (
+  roomId: string,
+  status: RoomStatus,
+  durationMs: number = 45000
+) => {
+  const runtime = ensureRuntime(roomId);
+  runtime.status = status;
+  runtime.phaseTicksRemaining = Math.max(2, Math.round(durationMs / 1000));
+  runtime.fallStage = status === ROOM_STATUS.FALL ? 0 : runtime.fallStage;
+  manualOverrideByRoom[roomId] = {
+    status,
+    expiresAt: Date.now() + durationMs
+  };
+};
+
+export const setAllMockManualStatus = (status: RoomStatus, durationMs: number = 45000) => {
+  roomIds.forEach((roomId) => {
+    setMockManualStatus(roomId, status, durationMs);
+  });
+};
+
+export const clearMockManualStatus = (roomId?: string) => {
+  if (roomId) {
+    delete manualOverrideByRoom[roomId];
+    return;
+  }
+  roomIds.forEach((id) => {
+    delete manualOverrideByRoom[id];
+  });
 };
 
 export const getMockRoomIds = () => roomIds;

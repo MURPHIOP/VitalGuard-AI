@@ -14,15 +14,15 @@ class Settings(BaseSettings):
     )
 
     app_name: str = Field(default="VITALGUARD AI BACKEND", alias="APP_NAME")
+    app_env: str = Field(default="production", alias="APP_ENV")
     app_host: str = Field(default="0.0.0.0", alias="APP_HOST")
     app_port: int = Field(default=8000, alias="APP_PORT")
     debug: bool = Field(default=False, alias="DEBUG")
 
-    mongodb_uri: str = Field(default="mongodb://localhost:27017", alias="MONGODB_URI")
-    mongodb_db: str = Field(default="vitalguard", alias="MONGODB_DB")
+    storage_mode: str = Field(default="memory", alias="STORAGE_MODE")
 
     model_path: str = Field(default="classifier/fall_model.pkl", alias="MODEL_PATH")
-    use_mock_inference: bool = Field(default=True, alias="USE_MOCK_INFERENCE")
+    use_mock_inference: bool = Field(default=False, alias="USE_MOCK_INFERENCE")
     use_mock_stream: bool = Field(default=True, alias="USE_MOCK_STREAM")
     mock_room_ids: str = Field(default="401,402,403", alias="MOCK_ROOM_IDS")
 
@@ -33,6 +33,15 @@ class Settings(BaseSettings):
 
     cors_origins: str = Field(default="*", alias="CORS_ORIGINS")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
+
+    @property
+    def cors_allow_all(self) -> bool:
+        origins = self.cors_origin_list
+        return not origins or origins == ["*"]
+
+    @property
+    def is_production(self) -> bool:
+        return self.app_env.strip().lower() == "production"
 
     @property
     def cors_origin_list(self) -> list[str]:

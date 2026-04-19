@@ -25,13 +25,13 @@ import { formatClock, formatLatency, formatPercent } from "@/utils/format";
 export default function RoomDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ id: string }>();
-  const roomId = params.id;
+  const roomId = Array.isArray(params.id) ? params.id[0] : params.id;
   const room = useRoomById(roomId);
 
   const connectionState = useAppStore((state) => state.connectionState);
   const markAcknowledged = useAppStore((state) => state.markAcknowledged);
   const setFeedbackState = useAppStore((state) => state.setFeedbackState);
-  const feedbackState = useAppStore((state) => state.feedbackStateByRoom[roomId] ?? "idle");
+  const feedbackState = useAppStore((state) => (roomId ? state.feedbackStateByRoom[roomId] : undefined) ?? "idle");
   const setRoomFeedbackResult = useAppStore((state) => state.setRoomFeedbackResult);
   const { triggerSuccess } = useHaptics();
 

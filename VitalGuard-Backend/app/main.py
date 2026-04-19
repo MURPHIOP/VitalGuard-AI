@@ -12,17 +12,11 @@ from app.core.inference_engine import InferenceEngine
 from app.core.mock_stream import MockTelemetryStream
 from app.core.room_state_manager import RoomStateManager
 from app.core.websocket_manager import WebSocketManager
-from app.db.indexes import ensure_indexes
-from app.db.mongo import MongoManager
 from app.db.repositories import (
-    AnomalyRepository,
     InMemoryAnomalyRepository,
     InMemoryFeedbackRepository,
     InMemoryRoomSnapshotRepository,
     InMemoryTelemetryRepository,
-    FeedbackRepository,
-    RoomSnapshotRepository,
-    TelemetryRepository,
 )
 from app.logging_config import configure_logging
 from app.models.telemetry import TelemetryIn
@@ -38,29 +32,19 @@ async def lifespan(app: FastAPI):
     configure_logging(settings.log_level)
 
     logger.info("Starting {}", settings.app_name)
+    logger.info(
+        "Deployment mode: app_env={} storage_mode={} mock_stream={} mock_inference={}",
+        settings.app_env,
+        settings.storage_mode,
+        settings.use_mock_stream,
+        settings.use_mock_inference,
+    )
+    logger.info("Storage mode: memory-only repositories enabled")
 
-    mongo = MongoManager(settings)
-    telemetry_repo: TelemetryRepository | InMemoryTelemetryRepository
-    anomaly_repo: AnomalyRepository | InMemoryAnomalyRepository
-    feedback_repo: FeedbackRepository | InMemoryFeedbackRepository
-    snapshot_repo: RoomSnapshotRepository | InMemoryRoomSnapshotRepository
-
-    try:
-        await mongo.connect()
-        db = mongo.db()
-        await ensure_indexes(db)
-        telemetry_repo = TelemetryRepository(db)
-        anomaly_repo = AnomalyRepository(db)
-        feedback_repo = FeedbackRepository(db)
-        snapshot_repo = RoomSnapshotRepository(db)
-        logger.info("MongoDB connected and indexes ensured")
-    except Exception as exc:
-        logger.warning("MongoDB unavailable, using in-memory repositories: {}", exc)
-        await mongo.disconnect()
-        telemetry_repo = InMemoryTelemetryRepository()
-        anomaly_repo = InMemoryAnomalyRepository()
-        feedback_repo = InMemoryFeedbackRepository()
-        snapshot_repo = InMemoryRoomSnapshotRepository()
+    telemetry_repo = InMemoryTelemetryRepository()
+    anomaly_repo = InMemoryAnomalyRepository()
+    feedback_repo = InMemoryFeedbackRepository()
+    snapshot_repo = InMemoryRoomSnapshotRepository()
 
     room_state_manager = RoomStateManager(
         chart_cache_size=settings.chart_cache_size,
@@ -96,7 +80,6 @@ async def lifespan(app: FastAPI):
         mock_stream.start(callback=telemetry_service.process_telemetry)
 
     app.state.settings = settings
-    app.state.mongo = mongo
     app.state.telemetry_repo = telemetry_repo
     app.state.anomaly_repo = anomaly_repo
     app.state.feedback_repo = feedback_repo
@@ -124,7 +107,6 @@ async def lifespan(app: FastAPI):
         if mock_stream is not None:
             await mock_stream.stop()
 
-        await mongo.disconnect()
         logger.info("{} stopped", settings.app_name)
 
 
@@ -132,10 +114,11 @@ def build_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title=settings.app_name, version="1.0.0", lifespan=lifespan)
 
+    allow_origins = ["*"] if settings.cors_allow_all else settings.cors_origin_list
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=settings.cors_origin_list if settings.cors_origin_list else ["*"],
-        allow_credentials=True,
+        allow_origins=allow_origins,
+        allow_credentials=not settings.cors_allow_all,
         allow_methods=["*"],
         allow_headers=["*"],
     )
