@@ -24,7 +24,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       resizeMode: "contain",
       backgroundColor: "#ededed"
     },
-    newArchEnabled: true,
+    newArchEnabled: false,
     assetBundlePatterns: ["**/*"],
     android: {
       package: "com.murphiop.vitalguardai",

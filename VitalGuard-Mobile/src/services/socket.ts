@@ -92,7 +92,15 @@ class RadarSocketClient {
 
     this.emit("connection", this.reconnectAttempts > 0 ? "RECONNECTING" : "CONNECTING");
 
-    this.ws = new WebSocket(config.socketUrl);
+    try {
+      this.ws = new WebSocket(config.socketUrl);
+    } catch {
+      this.ws = null;
+      this.emit("error", "WebSocket URL is invalid.");
+      this.emit("connection", "RECONNECTING");
+      this.scheduleReconnect();
+      return;
+    }
 
     this.ws.onopen = () => {
       this.reconnectAttempts = 0;
