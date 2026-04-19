@@ -30,6 +30,7 @@ type AppState = {
   feedbackStateByRoom: Record<string, FeedbackSubmissionState>;
   bootstrapped: boolean;
   demoOverrideUntil: number;
+  fallHoldUntilByRoom: Record<string, number>;
   setBootstrapped: (ready: boolean) => void;
   activateDemoOverride: (durationMs?: number) => void;
   isDemoOverrideActive: () => boolean;
@@ -106,6 +107,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   feedbackStateByRoom: {},
   bootstrapped: false,
   demoOverrideUntil: 0,
+  fallHoldUntilByRoom: {},
   setBootstrapped: (ready) => set({ bootstrapped: ready }),
   activateDemoOverride: (durationMs = 90000) =>
     set({
@@ -164,18 +166,30 @@ export const useAppStore = create<AppState>((set, get) => ({
     })),
   upsertTelemetry: (payload) =>
     set((state) => {
+      const now = Date.now();
+      const minFallHoldMs = 6500;
       const existing = state.rooms[payload.roomId];
       const currentRoom = existing ?? createEmptyRoom(payload);
       const nextPoint = toChartPoint(payload);
-      const nextStatusIsFall = payload.label === ROOM_STATUS.FALL;
+      const existingHoldUntil = state.fallHoldUntilByRoom[payload.roomId] ?? 0;
+      const shouldHoldFall =
+        existing?.status === ROOM_STATUS.FALL && payload.label !== ROOM_STATUS.FALL && now < existingHoldUntil;
+      const effectiveStatus = shouldHoldFall ? ROOM_STATUS.FALL : payload.label;
+      const nextStatusIsFall = effectiveStatus === ROOM_STATUS.FALL;
+      const nextHoldUntil = nextStatusIsFall ? now + minFallHoldMs : existingHoldUntil;
+
+      const effectivePayload: TelemetryPayload = {
+        ...payload,
+        label: effectiveStatus
+      };
 
       const updatedRoom: RoomModel = {
         ...currentRoom,
-        status: payload.label,
+        status: effectiveStatus,
         latency: payload.latency_ms,
         lastUpdated: payload.server_ts,
         nodeBattery: payload.nodeBattery,
-        telemetry: payload,
+        telemetry: effectivePayload,
         chartBuffer: trimBuffer([...currentRoom.chartBuffer, nextPoint]),
         alertActive: nextStatusIsFall ? true : currentRoom.alertActive && !currentRoom.acknowledged,
         acknowledged: nextStatusIsFall ? false : currentRoom.acknowledged
@@ -186,6 +200,10 @@ export const useAppStore = create<AppState>((set, get) => ({
         rooms: {
           ...state.rooms,
           [payload.roomId]: updatedRoom
+        },
+        fallHoldUntilByRoom: {
+          ...state.fallHoldUntilByRoom,
+          [payload.roomId]: nextHoldUntil
         },
         roomOrder: isNew ? [...state.roomOrder, payload.roomId] : state.roomOrder
       };

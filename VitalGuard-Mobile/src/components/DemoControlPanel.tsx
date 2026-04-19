@@ -10,10 +10,10 @@ import { GlassButton } from "./GlassButton";
 import { GlassCard } from "./GlassCard";
 
 const STATE_BUTTONS: { label: string; status: RoomStatus; variant: "primary" | "ghost" | "danger" }[] = [
-  { label: "NORMAL", status: ROOM_STATUS.NORMAL, variant: "primary" },
-  { label: "EMPTY", status: ROOM_STATUS.EMPTY, variant: "ghost" },
-  { label: "FALL", status: ROOM_STATUS.FALL, variant: "danger" },
-  { label: "OFFLINE", status: ROOM_STATUS.OFFLINE, variant: "ghost" }
+  { label: "Normal", status: ROOM_STATUS.NORMAL, variant: "primary" },
+  { label: "Empty", status: ROOM_STATUS.EMPTY, variant: "ghost" },
+  { label: "Fall", status: ROOM_STATUS.FALL, variant: "danger" },
+  { label: "Offline", status: ROOM_STATUS.OFFLINE, variant: "ghost" }
 ];
 
 export const DemoControlPanel = () => {
@@ -46,6 +46,7 @@ export const DemoControlPanel = () => {
             Demo-safe controls for class presentation. Active room target: {activeRoomLabel}
           </Text>
 
+          <Text style={styles.sectionLabel}>Mode</Text>
           <View style={styles.grid}>
             <GlassButton
               title={demoDataMode === "MOCK" ? "MOCK MODE ON" : "MOCK MODE"}
@@ -64,48 +65,57 @@ export const DemoControlPanel = () => {
             />
           </View>
 
-          <View style={styles.grid}>
+          <Text style={styles.sectionLabel}>Scene</Text>
+          <View style={styles.wrapGrid}>
             {STATE_BUTTONS.map((item) => (
-              <GlassButton
-                key={item.label}
-                title={item.label}
-                variant={item.variant}
-                onPress={() => {
-                  ensureDemoRooms();
-                  forceAllRoomStatuses(item.status);
-                }}
-              />
+              <View key={item.label} style={styles.halfButton}>
+                <GlassButton
+                  title={item.label}
+                  variant={item.variant}
+                  onPress={() => {
+                    ensureDemoRooms();
+                    forceAllRoomStatuses(item.status);
+                  }}
+                />
+              </View>
             ))}
           </View>
 
-          <View style={styles.grid}>
-            <GlassButton
-              title="FAKE RECONNECT"
-              variant="ghost"
-              onPress={() => {
-                ensureDemoRooms();
-                simulateReconnect();
-              }}
-            />
-            <GlassButton
-              title="ADD FALL HISTORY"
-              variant="danger"
-              onPress={() => {
-                ensureDemoRooms();
-                injectDemoHistoryFall();
-              }}
-            />
+          <Text style={styles.sectionLabel}>Actions</Text>
+          <View style={styles.wrapGrid}>
+            <View style={styles.halfButton}>
+              <GlassButton
+                title="Reconnect"
+                variant="ghost"
+                onPress={() => {
+                  ensureDemoRooms();
+                  simulateReconnect();
+                }}
+              />
+            </View>
+            <View style={styles.halfButton}>
+              <GlassButton
+                title="Add Fall"
+                variant="danger"
+                onPress={() => {
+                  ensureDemoRooms();
+                  injectDemoHistoryFall();
+                }}
+              />
+            </View>
           </View>
 
-          <View style={styles.grid}>
-            <GlassButton
-              title="FEEDBACK SUCCESS"
-              variant="primary"
-              onPress={() => {
-                ensureDemoRooms();
-                simulateFeedbackSuccess();
-              }}
-            />
+          <View style={styles.wrapGrid}>
+            <View style={styles.halfButton}>
+              <GlassButton
+                title="Feedback Success"
+                variant="primary"
+                onPress={() => {
+                  ensureDemoRooms();
+                  simulateFeedbackSuccess();
+                }}
+              />
+            </View>
           </View>
         </View>
       ) : null}
@@ -144,8 +154,23 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.caption,
     lineHeight: 18
   },
+  sectionLabel: {
+    color: theme.colors.textSecondary,
+    fontSize: 11,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    marginTop: 2
+  },
   grid: {
     flexDirection: "row",
     gap: theme.spacing.sm
+  },
+  wrapGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: theme.spacing.sm
+  },
+  halfButton: {
+    width: "48%"
   }
 });

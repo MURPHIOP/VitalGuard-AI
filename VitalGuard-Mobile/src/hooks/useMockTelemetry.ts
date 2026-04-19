@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { Platform } from "react-native";
 
 import { ROOM_STATUS, RoomStatus } from "@/constants/roomStatus";
 import { createInitialMockHistory, createMockTelemetry, getMockRoomIds } from "@/services/mockData";
@@ -48,6 +49,8 @@ export const useMockTelemetry = (enabled: boolean) => {
 
     setBootstrapped(true);
 
+    const tickIntervalMs = Platform.OS === "ios" ? 1300 : 1000;
+
     const interval = setInterval(() => {
       roomIds.forEach((roomId) => {
         const payload = createMockTelemetry(roomId, statusesRef.current[roomId]);
@@ -68,7 +71,7 @@ export const useMockTelemetry = (enabled: boolean) => {
           });
         }
       });
-    }, 1000);
+    }, tickIntervalMs);
 
     return () => {
       clearInterval(interval);
