@@ -1,4 +1,4 @@
-from loguru import logger
+from app.utils.logger import logger
 
 from app.db.repositories import AnomalyRepository, FeedbackRepository
 from app.models.feedback import FeedbackCreate, FeedbackRecord

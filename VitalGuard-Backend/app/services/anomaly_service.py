@@ -1,4 +1,4 @@
-from loguru import logger
+from app.utils.logger import logger
 
 from app.db.repositories import AnomalyRepository
 from app.models.anomaly import AnomalyRecord

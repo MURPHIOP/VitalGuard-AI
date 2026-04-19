@@ -1,10 +1,26 @@
 import asyncio
 from contextlib import asynccontextmanager
+import logging
 
-import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from loguru import logger
+try:
+    from loguru import logger
+except Exception:
+    class _LoggerFallback:
+        def __init__(self) -> None:
+            self._logger = logging.getLogger("vitalguard.main")
+
+        def info(self, message: str, *args) -> None:
+            self._logger.info(message.format(*args) if args else message)
+
+        def warning(self, message: str, *args) -> None:
+            self._logger.warning(message.format(*args) if args else message)
+
+        def exception(self, message: str, *args) -> None:
+            self._logger.exception(message.format(*args) if args else message)
+
+    logger = _LoggerFallback()
 
 from app.api import feedback_router, history_router, rooms_router, status_router
 from app.config import Settings, get_settings
@@ -195,6 +211,8 @@ app = build_app()
 
 
 def run() -> None:
+    import uvicorn
+
     settings = get_settings()
     uvicorn.run(
         "app.main:app",

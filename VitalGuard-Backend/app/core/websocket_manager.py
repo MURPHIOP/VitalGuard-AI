@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Any
 
 from fastapi import WebSocket
-from loguru import logger
+from app.utils.logger import logger
 
 
 class WebSocketManager:
