@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { useShallow } from "zustand/react/shallow";
 
 import { config } from "@/constants/config";
 import { ROOM_STATUS, RoomStatus } from "@/constants/roomStatus";
@@ -273,7 +274,9 @@ export const useAppStore = create<AppState>((set, get) => ({
 }));
 
 export const useRooms = () =>
-  useAppStore((state) => state.roomOrder.map((id) => state.rooms[id]).filter(Boolean));
+  useAppStore(
+    useShallow((state) => state.roomOrder.map((id) => state.rooms[id]).filter(Boolean))
+  );
 
 export const useRoomById = (id: string) => useAppStore((state) => state.rooms[id]);
 

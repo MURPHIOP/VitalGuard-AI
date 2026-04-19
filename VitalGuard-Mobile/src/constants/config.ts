@@ -57,7 +57,7 @@ const normalizeSocketUrl = (socketUrl: string, apiBaseUrl: string) => {
   return normalized;
 };
 
-const fallbackApiBaseUrl = "http://192.168.29.225:8000";
+const fallbackApiBaseUrl = "https://vitalguard-ai-1.onrender.com";
 const resolvedApiBaseUrl = normalizeUrl(envApiBaseUrl ?? extra.apiBaseUrl ?? fallbackApiBaseUrl);
 const appMode: AppMode = (envAppMode === "MOCK" ? "MOCK" : envAppMode === "LIVE" ? "LIVE" : extra.appMode ?? (extra.mockMode ? "MOCK" : "LIVE")) as AppMode;
 const fallbackSocketUrl = deriveSocketUrl(resolvedApiBaseUrl);

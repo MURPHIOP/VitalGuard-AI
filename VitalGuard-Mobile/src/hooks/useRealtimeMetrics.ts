@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 
 import { ROOM_STATUS } from "@/constants/roomStatus";
-import { useAppStore } from "@/store/appStore";
+import { useAppStore, useRooms } from "@/store/appStore";
 
 export const useRealtimeMetrics = () => {
-  const rooms = useAppStore((state) => state.roomOrder.map((id) => state.rooms[id]).filter(Boolean));
+  const rooms = useRooms();
   const connection = useAppStore((state) => state.connectionState);
 
   return useMemo(() => {
