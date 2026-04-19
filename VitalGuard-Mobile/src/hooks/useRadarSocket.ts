@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
 
-import { config } from "@/constants/config";
 import { ROOM_STATUS, RoomStatus } from "@/constants/roomStatus";
 import { fetchHistory, fetchRooms, RoomWire } from "@/services/api";
 import { radarSocket } from "@/services/socket";
@@ -17,11 +16,12 @@ export const useRadarSocket = () => {
   const setBootstrapped = useAppStore((state) => state.setBootstrapped);
   const markRoomsOffline = useAppStore((state) => state.markRoomsOffline);
   const isDemoOverrideActive = useAppStore((state) => state.isDemoOverrideActive);
+  const demoDataMode = useAppStore((state) => state.demoDataMode);
   const { triggerFall, triggerReconnect } = useHaptics();
   const previousConnection = useRef<string>("DISCONNECTED");
   const previousLabels = useRef<Record<string, string>>({});
   const lastFallSignalAt = useRef<Record<string, number>>({});
-  const shouldUseMock = config.mockMode;
+  const shouldUseMock = demoDataMode === "MOCK";
 
   useMockTelemetry(shouldUseMock);
 
@@ -172,5 +172,5 @@ export const useRadarSocket = () => {
       offError();
       radarSocket.disconnect();
     };
-  }, [addHistoryItems, isDemoOverrideActive, markRoomsOffline, prependHistoryItem, setBootstrapped, setConnectionState, shouldUseMock, triggerFallOnce, triggerReconnect, upsertTelemetry]);
+  }, [addHistoryItems, demoDataMode, isDemoOverrideActive, markRoomsOffline, prependHistoryItem, setBootstrapped, setConnectionState, shouldUseMock, triggerFallOnce, triggerReconnect, upsertTelemetry]);
 };

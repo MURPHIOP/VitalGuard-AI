@@ -18,10 +18,13 @@ import {
   TelemetryPayload
 } from "@/types";
 
+export type DemoDataMode = "MOCK" | "RANDOMIZER";
+
 type AppState = {
   rooms: Record<string, RoomModel>;
   roomOrder: string[];
   history: AnomalyHistoryItem[];
+  demoDataMode: DemoDataMode;
   connectionState: ConnectionState;
   selectedRoomId?: string;
   feedbackStateByRoom: Record<string, FeedbackSubmissionState>;
@@ -30,6 +33,7 @@ type AppState = {
   setBootstrapped: (ready: boolean) => void;
   activateDemoOverride: (durationMs?: number) => void;
   isDemoOverrideActive: () => boolean;
+  setDemoDataMode: (mode: DemoDataMode) => void;
   setConnectionState: (state: ConnectionState) => void;
   upsertTelemetry: (payload: TelemetryPayload) => void;
   addHistoryItems: (items: AnomalyHistoryItem[]) => void;
@@ -96,6 +100,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   rooms: {},
   roomOrder: [],
   history: [],
+  demoDataMode: config.mockMode ? "MOCK" : "RANDOMIZER",
   connectionState: config.mockMode ? "MOCK" : "CONNECTING",
   selectedRoomId: undefined,
   feedbackStateByRoom: {},
@@ -108,6 +113,13 @@ export const useAppStore = create<AppState>((set, get) => ({
       connectionState: "MOCK"
     }),
   isDemoOverrideActive: () => Date.now() < get().demoOverrideUntil,
+  setDemoDataMode: (mode) =>
+    set({
+      demoDataMode: mode,
+      demoOverrideUntil: 0,
+      bootstrapped: false,
+      connectionState: mode === "MOCK" ? "MOCK" : "CONNECTING"
+    }),
   setConnectionState: (state) => set({ connectionState: state }),
   setSelectedRoom: (id) => set({ selectedRoomId: id }),
   setFeedbackState: (roomId, status) =>

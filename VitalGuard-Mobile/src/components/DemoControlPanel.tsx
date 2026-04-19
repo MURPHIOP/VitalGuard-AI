@@ -21,6 +21,8 @@ export const DemoControlPanel = () => {
 
   const roomOrder = useAppStore((state) => state.roomOrder);
   const ensureDemoRooms = useAppStore((state) => state.ensureDemoRooms);
+  const demoDataMode = useAppStore((state) => state.demoDataMode);
+  const setDemoDataMode = useAppStore((state) => state.setDemoDataMode);
   const forceAllRoomStatuses = useAppStore((state) => state.forceAllRoomStatuses);
   const simulateReconnect = useAppStore((state) => state.simulateReconnect);
   const injectDemoHistoryFall = useAppStore((state) => state.injectDemoHistoryFall);
@@ -43,6 +45,24 @@ export const DemoControlPanel = () => {
           <Text style={styles.caption}>
             Demo-safe controls for class presentation. Active room target: {activeRoomLabel}
           </Text>
+
+          <View style={styles.grid}>
+            <GlassButton
+              title={demoDataMode === "MOCK" ? "MOCK MODE ON" : "MOCK MODE"}
+              variant={demoDataMode === "MOCK" ? "primary" : "ghost"}
+              onPress={() => {
+                setDemoDataMode("MOCK");
+                ensureDemoRooms();
+              }}
+            />
+            <GlassButton
+              title={demoDataMode === "RANDOMIZER" ? "RANDOMISER ON" : "RANDOMISER"}
+              variant={demoDataMode === "RANDOMIZER" ? "primary" : "ghost"}
+              onPress={() => {
+                setDemoDataMode("RANDOMIZER");
+              }}
+            />
+          </View>
 
           <View style={styles.grid}>
             {STATE_BUTTONS.map((item) => (
